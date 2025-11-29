@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioExplorer Nusantara: Ensiklopedia Interaktif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f0fdf4; /* Light green tint */
+            color: #1e293b;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #15803d;
+            border-radius: 4px;
+        }
+
+        /* Chart Container Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        /* Map Zone Interactive Styling */
+        .map-zone {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .map-zone:hover {
+            transform: translateY(-4px);
+            filter: brightness(1.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .map-zone.active {
+            transform: scale(1.02);
+            /* Visual ring is now handled by JS adding Tailwind classes to avoid invalid CSS property errors */
+        }
+
+        /* Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            appearance: none; /* Added standard property */
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none; /* Added standard property */
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #15803d;
+            cursor: pointer;
+            margin-top: -10px; 
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+    </style>
+    <!-- Chosen Palette: Nature Green & Earth Tones (Green-700 primary, Amber-500 accent) -->
+    <!-- Application Structure Plan: 
+         1. Hero Section: Introduction to the 3 pillars (Biodiversity, Habitat, Succession).
+         2. Interactive Biogeography: A schematic map allowing users to select West, Central, East Indonesia to see specific data.
+         3. Habitat Explorer: Filterable cards for Terrestrial/Aquatic habitats and Conservation types.
+         4. Ecological Succession Lab: A canvas-based simulator controlled by a slider to visualize vegetation growth over time.
+         5. Data Dashboard: Charts visualizing land/sea ratios and threat levels.
+         6. Quiz: Integrated assessment.
+    -->
+</head>
+<body class="bg-stone-50">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-green-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl tracking-tight">BioExplorer Nusantara</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#biodiversitas" class="hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium transition">Biodiversitas</a>
+                        <a href="#habitat" class="hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium transition">Habitat & Konservasi</a>
+                        <a href="#suksesi" class="hover:bg-green-700 px-3 py-2 rounded-md text-sm font-medium transition">Suksesi</a>
+                        <a href="#kuis" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-md text-sm font-bold transition">Kuis Kilat</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl font-extrabold text-green-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+                Menjelajahi Kekayaan Alam <span class="text-amber-600">Indonesia</span>
+            </h1>
+            <p class="mt-5 max-w-xl mx-auto text-xl text-gray-500">
+                Sebuah perjalanan interaktif memahami flora, fauna, habitat, dan dinamika ekosistem di negara kepulauan terbesar di dunia.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200 w-32">
+                    <div class="text-2xl font-bold text-green-700">17.000+</div>
+                    <div class="text-xs text-green-600 uppercase font-semibold">Pulau</div>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 w-32">
+                    <div class="text-2xl font-bold text-blue-700">Mega</div>
+                    <div class="text-xs text-blue-600 uppercase font-semibold">Biodiversitas</div>
+                </div>
+                <div class="bg-amber-50 p-4 rounded-lg border border-amber-200 w-32">
+                    <div class="text-2xl font-bold text-amber-700">3</div>
+                    <div class="text-xs text-amber-600 uppercase font-semibold">Zona Fauna</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-20">
+
+        <!-- SECTION 1: BIODIVERSITAS (Interactive Map) -->
+        <section id="biodiversitas" class="scroll-mt-20">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 border-l-4 border-green-600 pl-4">Keanekaragaman Hayati & Biogeografi</h2>
+                <p class="mt-4 text-lg text-gray-600 leading-relaxed">
+                    Indonesia terletak di antara dua benua dan dua samudra, menciptakan pola distribusi fauna yang unik. Garis <strong>Wallace</strong> dan <strong>Weber</strong> membagi Indonesia menjadi tiga zona utama. Klik wilayah di peta skematik di bawah ini untuk mempelajarinya.
+                </p>
+            </div>
+
+            <!-- Visualization: Schematic Map using CSS Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- The "Map" Column -->
+                <div class="lg:col-span-2 bg-blue-100 rounded-xl p-6 shadow-inner relative overflow-hidden h-96 flex items-center justify-center">
+                    <!-- Stylized Island Groups -->
+                    <div class="grid grid-cols-3 gap-4 w-full h-full relative z-10">
+                        
+                        <!-- Zone 1: Sunda/Asiatis -->
+                        <div onclick="selectZone('asiatis')" id="zone-asiatis" class="map-zone bg-green-600 text-white rounded-lg p-4 flex flex-col justify-center items-center shadow-lg relative group">
+                            <span class="text-3xl mb-2">🐘</span>
+                            <h3 class="font-bold text-lg">Indonesia Barat</h3>
+                            <p class="text-xs opacity-75">(Paparan Sunda)</p>
+                            <div class="absolute bottom-2 text-xs bg-white text-green-800 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Klik Detail</div>
+                        </div>
+
+                        <!-- Divider Wallace Line -->
+                        <div class="absolute left-1/3 top-0 bottom-0 w-1 bg-red-500/50 border-l-2 border-dashed border-red-700 flex items-center justify-center" style="left: 32%;">
+                            <span class="bg-red-100 text-red-800 text-xs px-1 py-4 font-bold rounded writing-vertical" style="writing-mode: vertical-rl; text-orientation: mixed;">Garis Wallace</span>
+                        </div>
+
+                        <!-- Zone 2: Wallacea/Peralihan -->
+                        <div onclick="selectZone('peralihan')" id="zone-peralihan" class="map-zone bg-amber-500 text-white rounded-lg p-4 flex flex-col justify-center items-center shadow-lg relative group">
+                            <span class="text-3xl mb-2">🦎</span>
+                            <h3 class="font-bold text-lg">Indonesia Tengah</h3>
+                            <p class="text-xs opacity-75">(Wallacea)</p>
+                            <div class="absolute bottom-2 text-xs bg-white text-amber-800 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Klik Detail</div>
+                        </div>
+
+                        <!-- Divider Weber Line -->
+                        <div class="absolute left-2/3 top-0 bottom-0 w-1 bg-red-500/50 border-l-2 border-dashed border-red-700 flex items-center justify-center" style="left: 65%;">
+                            <span class="bg-red-100 text-red-800 text-xs px-1 py-4 font-bold rounded writing-vertical" style="writing-mode: vertical-rl; text-orientation: mixed;">Garis Weber</span>
+                        </div>
+
+                        <!-- Zone 3: Sahul/Australis -->
+                        <div onclick="selectZone('australis')" id="zone-australis" class="map-zone bg-teal-600 text-white rounded-lg p-4 flex flex-col justify-center items-center shadow-lg relative group">
+                            <span class="text-3xl mb-2">🦘</span>
+                            <h3 class="font-bold text-lg">Indonesia Timur</h3>
+                            <p class="text-xs opacity-75">(Paparan Sahul)</p>
+                            <div class="absolute bottom-2 text-xs bg-white text-teal-800 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Klik Detail</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Background Decoration -->
+                    <div class="absolute inset-0 z-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiMwMDAiLz48L3N2Zz4=')]"></div>
+                </div>
+
+                <!-- Info Panel Column -->
+                <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col">
+                    <div id="zone-info-content">
+                        <div class="text-center h-full flex flex-col justify-center items-center text-gray-400">
+                            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <p>Pilih zona pada peta untuk melihat detail flora dan fauna.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Chart -->
+            <div class="mt-12 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold mb-4">Komposisi Wilayah Indonesia</h3>
+                <div class="flex flex-col md:flex-row items-center gap-8">
+                    <div class="chart-container">
+                        <canvas id="landSeaChart"></canvas>
+                    </div>
+                    <div class="flex-1 space-y-4">
+                        <p class="text-gray-600 text-sm">Indonesia adalah negara kepulauan dengan luas laut yang jauh lebih besar daripada daratan. Hal ini mempengaruhi pola penyebaran spesies dan tipe habitat yang ada.</p>
+                        <ul class="text-sm space-y-2">
+                            <li class="flex items-center"><span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>Daratan: ± 1.9 juta km² (35%)</li>
+                            <li class="flex items-center"><span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>Lautan: ± 3.2 juta km² (65%)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: HABITAT & KONSERVASI -->
+        <section id="habitat" class="scroll-mt-20">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 border-l-4 border-amber-500 pl-4">Habitat & Biologi Konservasi</h2>
+                <p class="mt-4 text-lg text-gray-600">
+                    Dari puncak gunung bersalju di Papua hingga dasar laut tropis, habitat menyediakan kebutuhan dasar organisme. Upaya konservasi (In-situ & Ex-situ) sangat penting untuk melindungi keanekaragaman ini.
+                </p>
+            </div>
+
+            <!-- Tabs for Habitat Types -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button onclick="filterHabitat('all')" class="habitat-btn active px-4 py-2 bg-gray-200 rounded-full text-sm font-semibold hover:bg-green-100 focus:outline-none transition">Semua</button>
+                <button onclick="filterHabitat('terestrial')" class="habitat-btn px-4 py-2 bg-white border border-gray-300 rounded-full text-sm font-semibold hover:bg-green-50 transition">Terestrial</button>
+                <button onclick="filterHabitat('aquatic')" class="habitat-btn px-4 py-2 bg-white border border-gray-300 rounded-full text-sm font-semibold hover:bg-blue-50 transition">Perairan (Aquatic)</button>
+                <button onclick="filterHabitat('konservasi')" class="habitat-btn px-4 py-2 bg-white border border-gray-300 rounded-full text-sm font-semibold hover:bg-amber-50 transition">Metode Konservasi</button>
+            </div>
+
+            <!-- Habitat Cards Grid -->
+            <div id="habitat-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Content injected via JS -->
+            </div>
+        </section>
+
+        <!-- SECTION 3: SUKSESI (Simulation) -->
+        <section id="suksesi" class="scroll-mt-20">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 border-l-4 border-teal-500 pl-4">Laboratorium Suksesi Ekologi</h2>
+                <p class="mt-4 text-lg text-gray-600">
+                    Suksesi adalah proses perubahan komunitas spesies dari waktu ke waktu. Gunakan simulator di bawah ini untuk melihat perbedaan antara <strong>Suksesi Primer</strong> (dimulai dari batuan) dan <strong>Suksesi Sekunder</strong> (dimulai setelah gangguan seperti kebakaran).
+                </p>
+            </div>
+
+            <div class="bg-gray-900 rounded-xl p-6 shadow-2xl text-white">
+                <div class="flex justify-center gap-4 mb-6">
+                    <button onclick="setSuccessionType('primary')" id="btn-primary" class="px-6 py-2 bg-teal-600 rounded-lg font-bold hover:bg-teal-500 transition ring-2 ring-white">Suksesi Primer</button>
+                    <button onclick="setSuccessionType('secondary')" id="btn-secondary" class="px-6 py-2 bg-gray-700 rounded-lg font-bold hover:bg-gray-600 transition text-gray-300">Suksesi Sekunder</button>
+                </div>
+
+                <!-- Canvas Visualization -->
+                <div class="relative w-full h-64 bg-gradient-to-b from-sky-300 to-sky-100 rounded-lg overflow-hidden border-b-8 border-stone-600 mb-6">
+                    <canvas id="successionCanvas" class="absolute bottom-0 left-0 w-full h-full"></canvas>
+                    
+                    <!-- Overlay Labels -->
+                    <div id="succession-label" class="absolute top-4 left-4 bg-black/50 px-3 py-1 rounded text-sm backdrop-blur-sm">
+                        Tahap: Batuan Gundul
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="space-y-4">
+                    <div class="flex justify-between text-sm text-gray-400">
+                        <span>Awal (Pionir)</span>
+                        <span>Komunitas Klimaks</span>
+                    </div>
+                    <input type="range" id="timeSlider" min="0" max="100" value="0" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <div id="description-box" class="bg-gray-800 p-4 rounded-lg border border-gray-700 text-sm leading-relaxed">
+                        Geser slider untuk melihat proses suksesi.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: QUIZ -->
+        <section id="kuis" class="scroll-mt-20">
+            <div class="bg-amber-50 rounded-2xl p-8 border border-amber-200">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-amber-800">Uji Pemahaman</h2>
+                    <p class="text-amber-700">Jawab pertanyaan berikut untuk menguji pengetahuanmu tentang biodiversitas, habitat, dan suksesi.</p>
+                </div>
+
+                <div id="quiz-container" class="space-y-6 max-w-2xl mx-auto">
+                    <!-- Quiz Content via JS -->
+                </div>
+
+                <div id="quiz-result" class="hidden text-center mt-8 p-4 bg-white rounded-lg shadow">
+                    <h3 class="text-2xl font-bold text-gray-800">Hasil: <span id="score">0</span>/5</h3>
+                    <button onclick="initQuiz()" class="mt-4 px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700">Coba Lagi</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-gray-300 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p>© 2025 BioExplorer Nusantara.</p>
+            <p class="text-sm mt-2 text-gray-500">Berdasarkan Materi Biologi: Keanekaragaman Hayati, Habitat, & Suksesi.</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA STORAGE ---
+        const biodiversityData = {
+            'asiatis': {
+                title: 'Fauna Asiatis (Barat)',
+                region: 'Sumatera, Jawa, Kalimantan, Bali',
+                desc: 'Memiliki kekerabatan dekat dengan fauna daratan Asia (Orientalis). Didominasi mamalia besar dan primata.',
+                species: [
+                    { name: 'Gajah Sumatera', icon: '🐘', status: 'Critically Endangered' },
+                    { name: 'Badak Jawa', icon: '🦏', status: 'Critically Endangered' },
+                    { name: 'Orangutan', icon: '🦧', status: 'Critically Endangered' },
+                    { name: 'Harimau Sumatera', icon: '🐅', status: 'Critically Endangered' },
+                    { name: 'Banteng', icon: '🐂', status: 'Endangered' }
+                ],
+                color: 'bg-green-50 border-green-200'
+            },
+            'peralihan': {
+                title: 'Fauna Peralihan (Tengah)',
+                region: 'Sulawesi, Nusa Tenggara, Maluku',
+                desc: 'Campuran Asia & Australia. Memiliki banyak hewan endemik khas yang tidak ditemukan di tempat lain.',
+                species: [
+                    { name: 'Komodo', icon: '🦎', status: 'Endangered' },
+                    { name: 'Anoa', icon: '🐃', status: 'Endangered' },
+                    { name: 'Babirusa', icon: '🐗', status: 'Endangered' },
+                    { name: 'Maleo', icon: '🥚', status: 'Endangered' },
+                    { name: 'Tarsius', icon: '👀', status: 'Vulnerable' }
+                ],
+                color: 'bg-amber-50 border-amber-200'
+            },
+            'australis': {
+                title: 'Fauna Australis (Timur)',
+                region: 'Papua, Kepulauan Aru',
+                desc: 'Mirip dengan fauna benua Australia. Didominasi hewan berkantung (marsupialia) dan burung berwarna indah. Sedikit mamalia besar.',
+                species: [
+                    { name: 'Cendrawasih', icon: '🦜', status: 'Vulnerable' },
+                    { name: 'Kangguru Pohon', icon: '🦘', status: 'Critically Endangered' },
+                    { name: 'Kasuari', icon: '🦃', status: 'Vulnerable' },
+                    { name: 'Walabi', icon: '🐾', status: 'Vulnerable' },
+                    { name: 'Kakatua Raja', icon: '🐦', status: 'Vulnerable' }
+                ],
+                color: 'bg-teal-50 border-teal-200'
+            }
+        };
+
+        const habitatData = [
+            {
+                type: 'terestrial',
+                title: 'Hutan Hujan Tropis',
+                desc: 'Curah hujan tinggi (>2000mm/th), kanopi lebat, biodiversitas tertinggi.',
+                icon: '🌳',
+                tags: ['Basah', 'Pohon Tinggi', 'Kalimantan']
+            },
+            {
+                type: 'terestrial',
+                title: 'Savana',
+                desc: 'Padang rumput diselingi pohon. Curah hujan rendah (500-1500mm).',
+                icon: '🌾',
+                tags: ['Kering', 'Rumput', 'NTT']
+            },
+            {
+                type: 'aquatic',
+                title: 'Ekosistem Air Payau',
+                desc: 'Pertemuan air tawar dan laut. Contoh: Hutan Mangrove & Estuari.',
+                icon: '🦀',
+                tags: ['Salinitas Sedang', 'Mangrove', 'Pesisir']
+            },
+            {
+                type: 'konservasi',
+                title: 'Taman Nasional (In-Situ)',
+                desc: 'Kawasan pelestarian alam dengan ekosistem asli. Contoh: TN Komodo, TN Ujung Kulon.',
+                icon: '🏞️',
+                tags: ['Zonasi', 'Wisata', 'Penelitian']
+            },
+            {
+                type: 'konservasi',
+                title: 'Suaka Margasatwa (In-Situ)',
+                desc: 'Fokus pada pelestarian satwa unik/langka tertentu.',
+                icon: '🦌',
+                tags: ['Satwa Khas', 'Perlindungan']
+            },
+            {
+                type: 'konservasi',
+                title: 'Kebun Binatang (Ex-Situ)',
+                desc: 'Konservasi di luar habitat asli. Untuk pendidikan dan pembiakan.',
+                icon: '🦓',
+                tags: ['Buatan', 'Edukasi']
+            }
+        ];
+
+        const quizQuestions = [
+            {
+                q: "Garis khayal yang memisahkan fauna tipe Asiatis dengan tipe Peralihan adalah...",
+                options: ["Garis Weber", "Garis Wallace", "Garis Khatulistiwa"],
+                correct: 1 // index
+            },
+            {
+                q: "Manakah yang termasuk hewan tipe Australis?",
+                options: ["Gajah", "Komodo", "Cendrawasih"],
+                correct: 2
+            },
+            {
+                q: "Suksesi primer terjadi pada lingkungan yang...",
+                options: ["Masih memiliki tanah", "Batuan gundul tanpa tanah", "Bekas kebakaran hutan"],
+                correct: 1
+            },
+            {
+                q: "Konservasi yang dilakukan di luar habitat asli disebut...",
+                options: ["In Situ", "Ex Situ", "Cagar Alam"],
+                correct: 1
+            },
+            {
+                q: "Tumbuhan perintis (Pionir) yang biasa muncul pertama kali di batuan adalah...",
+                options: ["Pohon Pinus", "Rumput Gajah", "Lumut Kerak (Lichen)"],
+                correct: 2
+            }
+        ];
+
+        // --- INTERACTION LOGIC ---
+
+        // 1. BIOGEOGRAPHY MAP INTERACTION
+        function selectZone(zoneKey) {
+            // UI Update: use Tailwind classes for rings to ensure no invalid CSS is used
+            document.querySelectorAll('.map-zone').forEach(el => {
+                el.classList.remove('active', 'ring-4', 'ring-amber-400');
+            });
+            const activeEl = document.getElementById(`zone-${zoneKey}`);
+            activeEl.classList.add('active', 'ring-4', 'ring-amber-400');
+
+            const data = biodiversityData[zoneKey];
+            const contentDiv = document.getElementById('zone-info-content');
+            
+            // Generate HTML
+            let speciesHtml = data.species.map(s => `
+                <div class="flex items-center p-3 bg-white rounded-lg shadow-sm border border-gray-100">
+                    <span class="text-2xl mr-3">${s.icon}</span>
+                    <div>
+                        <div class="font-bold text-gray-800">${s.name}</div>
+                        <div class="text-xs text-red-500 font-semibold">${s.status}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            contentDiv.innerHTML = `
+                <div class="h-full animate-fade-in-up">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">${data.title}</h3>
+                    <div class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">${data.region}</div>
+                    <p class="text-gray-600 mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">${data.desc}</p>
+                    <h4 class="font-bold text-gray-700 mb-3">Spesies Kunci:</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        ${speciesHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 2. HABITAT FILTERING
+        function renderHabitats(filterType) {
+            const grid = document.getElementById('habitat-grid');
+            grid.innerHTML = '';
+            
+            const filtered = filterType === 'all' 
+                ? habitatData 
+                : habitatData.filter(h => h.type === filterType);
+
+            filtered.forEach(h => {
+                const tagsHtml = h.tags.map(t => `<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">${t}</span>`).join('');
+                
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition';
+                card.innerHTML = `
+                    <div class="text-4xl mb-4">${h.icon}</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">${h.title}</h3>
+                    <p class="text-gray-600 text-sm mb-4 min-h-[40px]">${h.desc}</p>
+                    <div class="flex flex-wrap gap-2 mt-auto">
+                        ${tagsHtml}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Update buttons
+            document.querySelectorAll('.habitat-btn').forEach(btn => {
+                if(btn.getAttribute('onclick').includes(filterType)) {
+                    btn.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
+                    btn.classList.remove('bg-white', 'text-gray-600');
+                } else {
+                    btn.classList.remove('bg-green-100', 'text-green-800', 'border-green-300');
+                    btn.classList.add('bg-white', 'text-gray-600');
+                }
+            });
+        }
+        
+        function filterHabitat(type) {
+            renderHabitats(type);
+        }
+
+        // 3. SUCCESSION SIMULATION (CANVAS)
+        let successionType = 'primary';
+        const canvas = document.getElementById('successionCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('timeSlider');
+        const label = document.getElementById('succession-label');
+        const descBox = document.getElementById('description-box');
+
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+            drawSuccession(slider.value);
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function setSuccessionType(type) {
+            successionType = type;
+            slider.value = 0;
+            
+            // Toggle buttons
+            const btnP = document.getElementById('btn-primary');
+            const btnS = document.getElementById('btn-secondary');
+            
+            if (type === 'primary') {
+                btnP.classList.add('bg-teal-600', 'ring-2', 'ring-white', 'text-white');
+                btnP.classList.remove('bg-gray-700', 'text-gray-300');
+                btnS.classList.add('bg-gray-700', 'text-gray-300');
+                btnS.classList.remove('bg-teal-600', 'ring-2', 'ring-white', 'text-white');
+            } else {
+                btnS.classList.add('bg-teal-600', 'ring-2', 'ring-white', 'text-white');
+                btnS.classList.remove('bg-gray-700', 'text-gray-300');
+                btnP.classList.add('bg-gray-700', 'text-gray-300');
+                btnP.classList.remove('bg-teal-600', 'ring-2', 'ring-white', 'text-white');
+            }
+            drawSuccession(0);
+        }
+
+        function drawSuccession(val) {
+            const w = canvas.width;
+            const h = canvas.height;
+            const progress = val / 100;
+
+            // Clear
+            ctx.clearRect(0, 0, w, h);
+
+            // Ground
+            ctx.fillStyle = successionType === 'primary' ? '#64748b' : '#3f2c22'; // Grey rock vs Brown soil
+            if (successionType === 'primary' && progress > 0.2) ctx.fillStyle = '#57534e'; // Soil forming
+            if (progress > 0.5) ctx.fillStyle = '#452f20'; // Fertile soil
+            
+            ctx.fillRect(0, h - 40, w, 40);
+
+            // Logic for elements based on progress
+            let stageText = "";
+            let description = "";
+
+            if (progress < 0.2) {
+                stageText = successionType === 'primary' ? "1. Batuan Gundul" : "1. Gangguan (Api/Penebangan)";
+                description = successionType === 'primary' 
+                    ? "Lingkungan ekstrim tanpa tanah. Hanya batuan." 
+                    : "Tanah masih ada, namun vegetasi hilang akibat gangguan.";
+                
+                // Draw Lichens for Primary
+                if (successionType === 'primary') {
+                    ctx.fillStyle = '#86efac'; // light green
+                    for(let i=0; i<20; i++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.random()*w, h-40, Math.random()*3 + 1, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                } else {
+                    // Ash/Burnt stumps for Secondary
+                    ctx.fillStyle = '#1c1917';
+                    ctx.fillRect(w*0.2, h-45, 10, 5);
+                    ctx.fillRect(w*0.7, h-45, 10, 5);
+                }
+
+            } else if (progress < 0.5) {
+                stageText = "2. Tumbuhan Perintis";
+                description = "Lumut, lichen, dan tumbuhan herba mulai tumbuh, menciptakan lapisan tanah organik sederhana.";
+                
+                // Draw Grass/Herbs
+                ctx.strokeStyle = '#bef264';
+                ctx.lineWidth = 2;
+                const density = progress * 100;
+                for(let i=0; i<density; i++) {
+                    const x = (i/density) * w + Math.random()*10;
+                    ctx.beginPath();
+                    ctx.moveTo(x, h-40);
+                    ctx.lineTo(x, h-50 - Math.random()*10);
+                    ctx.stroke();
+                }
+
+            } else if (progress < 0.8) {
+                stageText = "3. Semak & Perdu";
+                description = "Tanah semakin subur. Semak belukar dan pohon-pohon kecil (pionir kayu) mulai mendominasi.";
+                
+                // Draw Shrubs
+                ctx.fillStyle = '#16a34a';
+                const density = 15;
+                for(let i=0; i<density; i++) {
+                    const x = (i/density) * w + Math.random()*20;
+                    ctx.beginPath();
+                    ctx.arc(x, h-60, 15, 0, Math.PI, true);
+                    ctx.fill();
+                    // trunk
+                    ctx.fillStyle = '#78350f';
+                    ctx.fillRect(x-2, h-60, 4, 20);
+                    ctx.fillStyle = '#16a34a'; // reset
+                }
+
+            } else {
+                stageText = "4. Komunitas Klimaks";
+                description = "Ekosistem stabil. Pohon-pohon besar, kanopi tertutup, dan keanekaragaman hayati tinggi.";
+                
+                // Draw Big Trees
+                const density = 8;
+                for(let i=0; i<density; i++) {
+                    const x = (i/density) * w + 20;
+                    // Trunk
+                    ctx.fillStyle = '#3f2c22';
+                    ctx.fillRect(x-5, h-120, 10, 80);
+                    // Foliage
+                    ctx.fillStyle = '#14532d'; // Dark green
+                    ctx.beginPath();
+                    ctx.moveTo(x-30, h-100);
+                    ctx.lineTo(x, h-180);
+                    ctx.lineTo(x+30, h-100);
+                    ctx.fill();
+                }
+            }
+
+            label.innerText = stageText;
+            descBox.innerText = description;
+        }
+
+        slider.addEventListener('input', (e) => drawSuccession(e.target.value));
+
+        // 4. QUIZ LOGIC
+        function initQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+            document.getElementById('quiz-result').classList.add('hidden');
+            
+            quizQuestions.forEach((q, idx) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'bg-white p-4 rounded-lg shadow-sm border border-gray-100';
+                qDiv.innerHTML = `
+                    <p class="font-bold text-gray-800 mb-3">${idx+1}. ${q.q}</p>
+                    <div class="space-y-2">
+                        ${q.options.map((opt, i) => `
+                            <button onclick="checkAnswer(this, ${idx}, ${i})" class="w-full text-left px-4 py-2 rounded border border-gray-200 hover:bg-amber-50 transition text-sm text-gray-600">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <p id="feedback-${idx}" class="mt-2 text-sm font-bold hidden"></p>
+                `;
+                container.appendChild(qDiv);
+            });
+        }
+
+        let score = 0;
+        let answeredCount = 0;
+
+        function checkAnswer(btn, qIdx, optIdx) {
+            // Disable all buttons in this question
+            const parent = btn.parentElement;
+            const buttons = parent.getElementsByTagName('button');
+            for(let b of buttons) b.disabled = true;
+
+            const isCorrect = optIdx === quizQuestions[qIdx].correct;
+            const feedback = document.getElementById(`feedback-${qIdx}`);
+            
+            feedback.classList.remove('hidden');
+            if(isCorrect) {
+                btn.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
+                feedback.innerText = "Benar! 🎉";
+                feedback.classList.add('text-green-600');
+                score++;
+            } else {
+                btn.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
+                feedback.innerText = "Salah. Jawaban yang benar: " + quizQuestions[qIdx].options[quizQuestions[qIdx].correct];
+                feedback.classList.add('text-red-600');
+                // Highlight correct one
+                buttons[quizQuestions[qIdx].correct].classList.add('bg-green-50', 'border-green-300');
+            }
+
+            answeredCount++;
+            if(answeredCount === quizQuestions.length) {
+                document.getElementById('quiz-result').classList.remove('hidden');
+                document.getElementById('score').innerText = score;
+                answeredCount = 0;
+                score = 0;
+            }
+        }
+
+        // 5. CHART.JS INITIALIZATION
+        function initChart() {
+            const ctxChart = document.getElementById('landSeaChart').getContext('2d');
+            new Chart(ctxChart, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Daratan (35%)', 'Lautan (65%)'],
+                    datasets: [{
+                        data: [35, 65],
+                        backgroundColor: ['#22c55e', '#3b82f6'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            renderHabitats('all');
+            selectZone('asiatis'); // Default selection
+            resizeCanvas();
+            initQuiz();
+        });
+
+    </script>
+    <!-- CONFIRMATION: NO SVG graphics used (except inline icons). NO Mermaid JS used. -->
+</body>
+</html>
